@@ -1,5 +1,5 @@
 import { buildSegments, Clock, formatTime, positionAt, PREP_SECONDS, totalMs, type Config, type Phase } from '../engine';
-import { buzz, sounds, unlockAudio } from '../audio';
+import { buzz, sounds, startKeepAlive, stopKeepAlive, unlockAudio } from '../audio';
 import { keepScreenOn, releaseScreen } from '../wakelock';
 import { Fox } from '../fox/fox';
 import { icons } from './icons';
@@ -53,6 +53,7 @@ export function renderRun(root: HTMLElement, config: Config, onExit: () => void)
   const exit = () => {
     cancelAnimationFrame(frame);
     onScreen.stop();
+    stopKeepAlive();
     releaseScreen();
     onExit();
   };
@@ -62,6 +63,7 @@ export function renderRun(root: HTMLElement, config: Config, onExit: () => void)
     clock.pause();
     releaseScreen();
     if (withSound) sounds.finish();
+    setTimeout(stopKeepAlive, 4000); // let the last bowl ring out on Bluetooth too
     buzz([200, 120, 200]);
     run.classList.remove('paused');
     run.dataset.phase = 'done';
@@ -138,6 +140,7 @@ export function renderRun(root: HTMLElement, config: Config, onExit: () => void)
   });
 
   keepScreenOn();
+  if (withSound) startKeepAlive();
   clock.start();
   frame = requestAnimationFrame(tick);
 }
